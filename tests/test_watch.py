@@ -54,7 +54,8 @@ def test_merge_changed_paths_updates_db(tmp_path: Path) -> None:
 
     info = read_info(db)
     assert info.mode == "merged"
-    assert info.symbol_count == 3
+    assert info.symbol_count == 4
+    assert info.edge_count == 2
 
     from stubborn.store.reader import list_symbols
 
@@ -97,6 +98,8 @@ def test_merge_once_cli_skip_index(tmp_path: Path) -> None:
     info = read_info(db)
     assert info.mode == "merged"
     assert info.merge_count == 1
+    assert info.symbol_count == 4
+    assert info.edge_count == 2
 
 
 def test_debounced_handler_queues_paths(tmp_path: Path) -> None:
