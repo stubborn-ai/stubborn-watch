@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -142,6 +143,38 @@ def test_load_workspace_manifest_resolves_repo_paths(tmp_path: Path) -> None:
     assert loaded.repos[0].scip_path == repo.resolve() / "target" / "index.scip"
     assert loaded.repos[0].glob_pattern == "src/**/*.java"
     assert loaded.repos[0].scip_command == ["echo", "index"]
+
+
+def test_workspace_handlers_can_share_write_lock(tmp_path: Path) -> None:
+    root_a = tmp_path / "repo-a"
+    root_b = tmp_path / "repo-b"
+    root_a.mkdir()
+    root_b.mkdir()
+    lock = threading.Lock()
+
+    handler_a = _DebouncedMergeHandler(
+        WatchConfig(
+            project_root=root_a,
+            db_path=tmp_path / "symbols.db",
+            scip_path=root_a / "index.scip",
+            workspace="acme",
+            repo_key="repo-a",
+        ),
+        write_lock=lock,
+    )
+    handler_b = _DebouncedMergeHandler(
+        WatchConfig(
+            project_root=root_b,
+            db_path=tmp_path / "symbols.db",
+            scip_path=root_b / "index.scip",
+            workspace="acme",
+            repo_key="repo-b",
+        ),
+        write_lock=lock,
+    )
+
+    assert handler_a._write_lock is lock
+    assert handler_b._write_lock is lock
 
 
 def test_debounced_handler_queues_paths(tmp_path: Path) -> None:

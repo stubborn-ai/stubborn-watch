@@ -27,9 +27,10 @@ class WatchConfig:
 
 
 class _DebouncedMergeHandler(FileSystemEventHandler):
-    def __init__(self, config: WatchConfig) -> None:
+    def __init__(self, config: WatchConfig, *, write_lock: threading.Lock | None = None) -> None:
         self._config = config
         self._lock = threading.Lock()
+        self._write_lock = write_lock or threading.Lock()
         self._pending: set[str] = set()
         self._timer: threading.Timer | None = None
         self._matcher = _glob_matcher(config.project_root, config.glob_pattern)
@@ -57,15 +58,16 @@ class _DebouncedMergeHandler(FileSystemEventHandler):
         if not paths:
             return
 
-        run_scip_indexer(self._config.project_root, command=self._config.scip_command)
-        merge_changed_paths(
-            project_root=self._config.project_root,
-            db_path=self._config.db_path,
-            scip_path=self._config.scip_path,
-            changed_paths=paths,
-            workspace=self._config.workspace,
-            repo_key=self._config.repo_key,
-        )
+        with self._write_lock:
+            run_scip_indexer(self._config.project_root, command=self._config.scip_command)
+            merge_changed_paths(
+                project_root=self._config.project_root,
+                db_path=self._config.db_path,
+                scip_path=self._config.scip_path,
+                changed_paths=paths,
+                workspace=self._config.workspace,
+                repo_key=self._config.repo_key,
+            )
 
 
 def _glob_matcher(project_root: Path, pattern: str):
@@ -98,6 +100,7 @@ def run_watch(config: WatchConfig) -> None:
 def run_workspace_watch(manifest: WorkspaceManifest) -> None:
     """Block until interrupted, watching every repo in a workspace manifest."""
     observer = Observer()
+    write_lock = threading.Lock()
     for repo in manifest.repos:
         config = WatchConfig(
             project_root=repo.root,
@@ -109,7 +112,11 @@ def run_workspace_watch(manifest: WorkspaceManifest) -> None:
             workspace=manifest.workspace,
             repo_key=repo.repo_key,
         )
-        observer.schedule(_DebouncedMergeHandler(config), str(repo.root), recursive=True)
+        observer.schedule(
+            _DebouncedMergeHandler(config, write_lock=write_lock),
+            str(repo.root),
+            recursive=True,
+        )
     observer.start()
     try:
         while True:
