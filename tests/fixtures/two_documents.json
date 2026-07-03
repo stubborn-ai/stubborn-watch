@@ -1,0 +1,30 @@
+{
+  "language": "java",
+  "project_root": "/example",
+  "documents": [
+    {
+      "relative_path": "com/example/OrderService.java",
+      "symbols": [
+        {
+          "stable_id": "semanticdb maven com/example/OrderService#",
+          "display_name": "OrderService",
+          "kind": "class",
+          "signature": "public class OrderService"
+        }
+      ],
+      "edges": []
+    },
+    {
+      "relative_path": "com/example/Order.java",
+      "symbols": [
+        {
+          "stable_id": "semanticdb maven com/example/Order#",
+          "display_name": "Order",
+          "kind": "class",
+          "signature": "public class Order"
+        }
+      ],
+      "edges": []
+    }
+  ]
+}
