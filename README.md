@@ -35,6 +35,20 @@ stubborn-watch merge-once --root . --db symbols.db \
 
 Use `--skip-index` when `index.scip` is already fresh.
 
+## Validation scope
+
+This repo owns **orchestration-focused** validation:
+
+- CLI smoke for `merge-once`
+- debounce and path normalization
+- subprocess invocation contracts around `scip-java`
+
+The canonical ADR-009 runnable demo lives in `stubborn-demo`:
+
+- [`stubborn-demo/demo-spring/scripts/run-merge-e2e.ps1`](https://github.com/stubborn-ai/stubborn-demo/blob/main/demo-spring/scripts/run-merge-e2e.ps1)
+
+That keeps `stubborn-watch` focused on watch behavior, while `stubborn-demo` owns runnable demo assets and black-box validation projects.
+
 ## Options
 
 | Flag | Default | Purpose |
@@ -50,6 +64,7 @@ Use `--skip-index` when `index.scip` is already fresh.
 
 - [stubborn](https://github.com/stubborn-ai/stubborn) — core compiler + `--merge`
 - [stubborn-mcp](https://github.com/stubborn-ai/stubborn-mcp) — MCP server over the same `symbols.db`
+- [stubborn-demo](https://github.com/stubborn-ai/stubborn-demo) — runnable demos and validation projects
 - [stubborn-hub](https://github.com/stubborn-ai/stubborn-hub) — program architecture
 
 ## License

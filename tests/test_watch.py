@@ -5,8 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from typer.testing import CliRunner
+
+from stubborn_watch.cli import app
 from stubborn_watch.runner import merge_changed_paths, relative_source_path, run_scip_indexer
 from stubborn_watch.watcher import WatchConfig, _DebouncedMergeHandler
+
+RUNNER = CliRunner()
 
 
 def test_relative_source_path_uses_posix(tmp_path: Path) -> None:
@@ -56,6 +61,42 @@ def test_merge_changed_paths_updates_db(tmp_path: Path) -> None:
     names = {s.display_name for s in list_symbols(db, limit=20)}
     assert "PaymentService" in names
     assert "Order" in names
+
+
+def test_merge_once_cli_skip_index(tmp_path: Path) -> None:
+    fixtures = Path(__file__).resolve().parents[1] / "tests" / "fixtures"
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    db = tmp_path / "symbols.db"
+
+    from stubborn.ingest.scip import load_scip_index
+    from stubborn.store.writer import IndexWriter, read_info
+
+    base = load_scip_index(fixtures / "two_documents.json")
+    IndexWriter(db).write(base)
+
+    result = RUNNER.invoke(
+        app,
+        [
+            "merge-once",
+            "--root",
+            str(project_root),
+            "--db",
+            str(db),
+            "--scip",
+            str(fixtures / "two_documents_merged.json"),
+            "--paths",
+            "com/example/OrderService.java",
+            "--skip-index",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert "Merged 1 path(s)" in result.stdout
+
+    info = read_info(db)
+    assert info.mode == "merged"
+    assert info.merge_count == 1
 
 
 def test_debounced_handler_queues_paths(tmp_path: Path) -> None:
