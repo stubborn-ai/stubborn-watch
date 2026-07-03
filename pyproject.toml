@@ -37,6 +37,7 @@ stubborn-watch = "stubborn_watch.cli:main"
 Homepage = "https://github.com/stubborn-ai/stubborn-watch"
 Repository = "https://github.com/stubborn-ai/stubborn-watch"
 Documentation = "https://github.com/stubborn-ai/stubborn-watch#readme"
+Changelog = "https://github.com/stubborn-ai/stubborn-watch/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/stubborn_watch"]
