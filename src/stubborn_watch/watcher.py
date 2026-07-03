@@ -10,6 +10,7 @@ from pathlib import Path
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
+from stubborn_watch.manifest import WorkspaceManifest
 from stubborn_watch.runner import merge_changed_paths, relative_source_path, run_scip_indexer
 
 
@@ -21,6 +22,8 @@ class WatchConfig:
     debounce_seconds: float = 2.0
     glob_pattern: str = "**/*.java"
     scip_command: list[str] | None = None
+    workspace: str | None = None
+    repo_key: str | None = None
 
 
 class _DebouncedMergeHandler(FileSystemEventHandler):
@@ -60,6 +63,8 @@ class _DebouncedMergeHandler(FileSystemEventHandler):
             db_path=self._config.db_path,
             scip_path=self._config.scip_path,
             changed_paths=paths,
+            workspace=self._config.workspace,
+            repo_key=self._config.repo_key,
         )
 
 
@@ -81,6 +86,30 @@ def run_watch(config: WatchConfig) -> None:
     handler = _DebouncedMergeHandler(config)
     observer = Observer()
     observer.schedule(handler, str(config.project_root), recursive=True)
+    observer.start()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+
+
+def run_workspace_watch(manifest: WorkspaceManifest) -> None:
+    """Block until interrupted, watching every repo in a workspace manifest."""
+    observer = Observer()
+    for repo in manifest.repos:
+        config = WatchConfig(
+            project_root=repo.root,
+            db_path=manifest.db_path,
+            scip_path=repo.scip_path,
+            debounce_seconds=manifest.debounce_seconds,
+            glob_pattern=repo.glob_pattern,
+            scip_command=repo.scip_command,
+            workspace=manifest.workspace,
+            repo_key=repo.repo_key,
+        )
+        observer.schedule(_DebouncedMergeHandler(config), str(repo.root), recursive=True)
     observer.start()
     try:
         while True:

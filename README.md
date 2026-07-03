@@ -35,6 +35,27 @@ stubborn-watch merge-once --root . --db symbols.db \
 
 Use `--skip-index` when `index.scip` is already fresh.
 
+### Workspace watch (multi-repo)
+
+For source-available internal repos, use a workspace manifest so each repo can
+index and merge independently into one shared workspace DB:
+
+```json
+{
+  "workspace": "acme",
+  "db": "symbols.db",
+  "repos": [
+    { "repo_key": "orders-api", "root": "../orders-api", "scip": "index.scip" },
+    { "repo_key": "orders-core", "root": "../orders-core", "scip": "index.scip" }
+  ]
+}
+```
+
+```bash
+stubborn-watch workspace-watch --manifest stubborn-workspace.json
+stubborn context symbols.db --workspace acme --target "<stable_id>"
+```
+
 ## Validation scope
 
 This repo owns **orchestration-focused** validation:
@@ -59,6 +80,8 @@ That keeps `stubborn-watch` focused on watch behavior, while `stubborn-demo` own
 | `--debounce` | `2.0` | Seconds to coalesce events |
 | `--pattern` | `**/*.java` | Watched file glob |
 | `--scip-cmd` | `scip-java index` | External indexer command |
+| `--workspace` | — | Workspace name for repo-scoped merges |
+| `--repo` | — | Repo key for repo-scoped merges |
 
 ## Related
 

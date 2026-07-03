@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 from typer.testing import CliRunner
 
 from stubborn_watch.cli import app
+from stubborn_watch.manifest import load_workspace_manifest
 from stubborn_watch.runner import merge_changed_paths, relative_source_path, run_scip_indexer
 from stubborn_watch.watcher import WatchConfig, _DebouncedMergeHandler
 
@@ -40,7 +41,7 @@ def test_merge_changed_paths_updates_db(tmp_path: Path) -> None:
     from stubborn.store.writer import IndexWriter
 
     base = load_scip_index(fixtures / "two_documents.json")
-    IndexWriter(db).write(base)
+    IndexWriter(db).write(base, workspace="acme", repo_key="orders")
 
     run_id = merge_changed_paths(
         project_root=project_root,
@@ -74,7 +75,7 @@ def test_merge_once_cli_skip_index(tmp_path: Path) -> None:
     from stubborn.store.writer import IndexWriter, read_info
 
     base = load_scip_index(fixtures / "two_documents.json")
-    IndexWriter(db).write(base)
+    IndexWriter(db).write(base, workspace="acme", repo_key="orders")
 
     result = RUNNER.invoke(
         app,
@@ -89,6 +90,10 @@ def test_merge_once_cli_skip_index(tmp_path: Path) -> None:
             "--paths",
             "com/example/OrderService.java",
             "--skip-index",
+            "--workspace",
+            "acme",
+            "--repo",
+            "orders",
         ],
     )
 
@@ -100,6 +105,43 @@ def test_merge_once_cli_skip_index(tmp_path: Path) -> None:
     assert info.merge_count == 1
     assert info.symbol_count == 4
     assert info.edge_count == 2
+    assert info.workspace == "acme"
+    assert info.repo_key == "orders"
+
+
+def test_load_workspace_manifest_resolves_repo_paths(tmp_path: Path) -> None:
+    repo = tmp_path / "repo-a"
+    repo.mkdir()
+    manifest = tmp_path / "stubborn-workspace.json"
+    manifest.write_text(
+        """
+        {
+          "workspace": "acme",
+          "db": "symbols.db",
+          "debounce": 1.5,
+          "repos": [
+            {
+              "repo_key": "repo-a",
+              "root": "repo-a",
+              "scip": "target/index.scip",
+              "pattern": "src/**/*.java",
+              "scip_cmd": "echo index"
+            }
+          ]
+        }
+        """,
+        encoding="utf-8",
+    )
+
+    loaded = load_workspace_manifest(manifest)
+    assert loaded.workspace == "acme"
+    assert loaded.db_path == (tmp_path / "symbols.db").resolve()
+    assert loaded.debounce_seconds == 1.5
+    assert loaded.repos[0].repo_key == "repo-a"
+    assert loaded.repos[0].root == repo.resolve()
+    assert loaded.repos[0].scip_path == repo.resolve() / "target" / "index.scip"
+    assert loaded.repos[0].glob_pattern == "src/**/*.java"
+    assert loaded.repos[0].scip_command == ["echo", "index"]
 
 
 def test_debounced_handler_queues_paths(tmp_path: Path) -> None:

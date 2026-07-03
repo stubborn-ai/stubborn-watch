@@ -6,6 +6,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Workspace manifest watch mode for supervising multiple repo roots into one shared workspace `symbols.db`.
+- `--workspace` / `--repo` forwarding for repo-scoped incremental merges.
+
 ## [0.1.0b1] - 2026-07-04
 
 ### Added

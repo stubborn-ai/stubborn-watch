@@ -29,10 +29,17 @@ def merge_changed_paths(
     db_path: Path,
     scip_path: Path,
     changed_paths: set[str],
+    workspace: str | None = None,
+    repo_key: str | None = None,
 ) -> int:
     """Load SCIP output and merge only the given document paths."""
     snapshot = load_scip_index(scip_path, project_root=str(project_root))
-    return IndexWriter(db_path).merge(snapshot, paths=changed_paths)
+    return IndexWriter(db_path).merge(
+        snapshot,
+        paths=changed_paths,
+        workspace=workspace,
+        repo_key=repo_key,
+    )
 
 
 def relative_source_path(project_root: Path, file_path: Path) -> str:
