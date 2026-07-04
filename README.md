@@ -66,7 +66,7 @@ This repo owns **orchestration-focused** validation:
 
 The canonical ADR-009 runnable demo lives in `stubborn-demo`:
 
-- [`stubborn-demo/demo-spring/scripts/run-merge-e2e.ps1`](https://github.com/stubborn-ai/stubborn-demo/blob/main/demo-spring/scripts/run-merge-e2e.ps1)
+- [`stubborn-demo/demo-spring/scripts/run-merge-e2e.sh`](https://github.com/stubborn-ai/stubborn-demo/blob/main/demo-spring/scripts/run-merge-e2e.sh)
 
 That keeps `stubborn-watch` focused on watch behavior, while `stubborn-demo` owns runnable demo assets and black-box validation projects.
 

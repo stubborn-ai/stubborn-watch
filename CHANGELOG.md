@@ -6,10 +6,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0b2] - 2026-07-05
+
 ### Added
 
 - Workspace manifest watch mode for supervising multiple repo roots into one shared workspace `symbols.db`.
 - `--workspace` / `--repo` forwarding for repo-scoped incremental merges.
+
+### Changed
+
+- `stubborn-watch` now expects `stubborn-stub>=0.9.0b5`, matching the current core release line.
 
 ## [0.1.0b1] - 2026-07-04
 
@@ -21,3 +27,4 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CI: pytest + ruff on Python 3.11-3.13.
 
 [0.1.0b1]: https://github.com/stubborn-ai/stubborn-watch/releases/tag/v0.1.0b1
+[0.1.0b2]: https://github.com/stubborn-ai/stubborn-watch/compare/v0.1.0b1...v0.1.0b2
