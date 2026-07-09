@@ -117,7 +117,7 @@ def project_checks(root: Path, db_path: Path | None, scip_path: Path) -> list[Ch
 
     checks.append(Check(id="watch.db", status="pass", message=f"merge target: {db_path}"))
     try:
-        info = read_info(db_path)
+        info = read_info(db_path, migrate=False)
         checks.append(
             Check(
                 id="watch.db_index",

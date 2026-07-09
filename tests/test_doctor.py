@@ -3,13 +3,38 @@
 from __future__ import annotations
 
 import json
+import sqlite3
+from importlib import resources
 from pathlib import Path
 
 from typer.testing import CliRunner
 
+from stubborn.store.writer import read_schema_version
 from stubborn_watch.cli import app
 from stubborn_watch.doctor.models import DOCTOR_REPORT_SCHEMA, PACKAGE_ID
 from stubborn_watch.doctor.run import run_doctor
+
+
+def _legacy_v1_db(root: Path) -> Path:
+    db = root / "symbols.db"
+    v1_ref = resources.files("stubborn.store") / "schema" / "v1.sql"
+    with resources.as_file(v1_ref) as v1_path:
+        conn = sqlite3.connect(db)
+        try:
+            conn.executescript(v1_path.read_text(encoding="utf-8"))
+            conn.execute(
+                "INSERT INTO index_run (scip_source, tool_version) VALUES (?, ?)",
+                ("fixture.json", "0.0.0"),
+            )
+            run_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+            conn.execute(
+                "INSERT INTO scip_symbol (index_run_id, stable_id, kind) VALUES (?, ?, ?)",
+                (run_id, "semanticdb maven com/example/Foo#", "class"),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+    return db
 
 
 def test_watch_doctor_json_schema(tmp_path: Path) -> None:
@@ -56,3 +81,14 @@ def test_watch_cli_doctor_json(tmp_path: Path, monkeypatch) -> None:
     assert result.exit_code in (0, 2)
     payload = json.loads(result.stdout)
     assert payload["package"] == PACKAGE_ID
+
+
+def test_watch_doctor_does_not_migrate_legacy_schema(tmp_path: Path, monkeypatch) -> None:
+    db = _legacy_v1_db(tmp_path)
+    version_before = read_schema_version(db)
+    assert version_before == 1
+    monkeypatch.setattr("stubborn_watch.doctor.checks.shutil.which", lambda _: "/usr/bin/scip-java")
+
+    run_doctor(tmp_path, db_path=db, fix_hint=False)
+
+    assert read_schema_version(db) == version_before == 1
