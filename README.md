@@ -83,6 +83,15 @@ That keeps `stubborn-watch` focused on watch behavior, while `stubborn-demo` own
 | `--workspace` | — | Workspace name for repo-scoped merges |
 | `--repo` | — | Repo key for repo-scoped merges |
 
+## Setup diagnostics
+
+Read-only dev-loop prerequisites ([ADR-015](https://github.com/stubborn-ai/stubborn/blob/main/docs/adr/ADR-015-federated-doctor-diagnostics.md)) — does not start watch or invoke scip-java:
+
+```bash
+stubborn-watch doctor --root . --db symbols.db
+stubborn-watch doctor --json
+```
+
 ## Related
 
 - [stubborn](https://github.com/stubborn-ai/stubborn) — core compiler + `--merge`

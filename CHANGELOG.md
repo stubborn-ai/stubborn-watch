@@ -6,6 +6,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`stubborn-watch doctor`** — read-only watch-loop setup diagnostics per [ADR-015](https://github.com/stubborn-ai/stubborn/blob/main/docs/adr/ADR-015-federated-doctor-diagnostics.md) (`--json`).
+
+### Fixed
+
+- **`stubborn-watch doctor`** no longer migrates legacy `symbols.db` schema during inspection (`read_info(..., migrate=False)`).
+
 ## [0.1.0b2] - 2026-07-05
 
 ### Added
