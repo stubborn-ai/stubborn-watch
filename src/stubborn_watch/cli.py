@@ -7,6 +7,8 @@ from typing import Optional
 
 import typer
 
+from stubborn_watch.doctor.report import format_json, format_text
+from stubborn_watch.doctor.run import run_doctor
 from stubborn_watch.manifest import load_workspace_manifest
 from stubborn_watch.runner import merge_changed_paths, run_scip_indexer
 from stubborn_watch.watcher import WatchConfig, run_watch, run_workspace_watch
@@ -106,6 +108,52 @@ def merge_once_cmd(
         repo_key=repo,
     )
     typer.echo(f"Merged {len(changed)} path(s) into {db} (index_run_id={index_run_id})")
+
+
+@app.command("doctor")
+def doctor_cmd(
+    path: Path = typer.Argument(
+        Path("."),
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        resolve_path=True,
+        help="Project root to inspect",
+    ),
+    db: Optional[Path] = typer.Option(None, "--db", help="Merge target SQLite path"),
+    scip: Path = typer.Option(Path("index.scip"), "--scip", help="SCIP index path"),
+    manifest: Optional[Path] = typer.Option(
+        None,
+        "--manifest",
+        help="Workspace manifest JSON for workspace-watch setups",
+    ),
+    scip_cmd: Optional[str] = typer.Option(None, "--scip-cmd", help="Indexer command override"),
+    json_output: bool = typer.Option(False, "--json", help="Emit Doctor Report v1 JSON"),
+    fix_hint: bool = typer.Option(
+        True,
+        "--fix-hint/--no-fix-hint",
+        help="Include copy-paste hints in human output",
+    ),
+    quiet: bool = typer.Option(False, "-q", "--quiet", help="Suppress output; exit code only"),
+) -> None:
+    """Diagnose watch-loop prerequisites (read-only; does not start watching)."""
+    root = path.resolve()
+    scip_path = scip if scip.is_absolute() else root / scip
+    indexer = scip_cmd.split() if scip_cmd else None
+    report = run_doctor(
+        root,
+        db_path=db.resolve() if db else None,
+        scip_path=scip_path,
+        manifest=manifest.resolve() if manifest else None,
+        scip_cmd=indexer,
+        fix_hint=fix_hint,
+    )
+    if not quiet:
+        if json_output:
+            typer.echo(format_json(report))
+        else:
+            typer.echo(format_text(report, fix_hint=fix_hint))
+    raise typer.Exit(code=report.exit_code())
 
 
 def main() -> None:
