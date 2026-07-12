@@ -55,11 +55,10 @@ def test_watch_doctor_with_db(tmp_path: Path, monkeypatch) -> None:
     from stubborn.ingest.scip import load_scip_index
     from stubborn.store.writer import IndexWriter
 
-    fixture = (
-        Path(__file__).resolve().parents[2] / "stubborn" / "examples" / "fixtures" / "minimal.json"
-    )
-    db = tmp_path / "symbols.db"
-    IndexWriter(db).write(load_scip_index(fixture))
+    fixture_ref = resources.files("stubborn.fixtures") / "minimal.json"
+    with resources.as_file(fixture_ref) as fixture:
+        db = tmp_path / "symbols.db"
+        IndexWriter(db).write(load_scip_index(fixture))
     monkeypatch.setattr(
         "stubborn_watch.doctor.checks.shutil.which", lambda name: "/usr/bin/scip-java"
     )
