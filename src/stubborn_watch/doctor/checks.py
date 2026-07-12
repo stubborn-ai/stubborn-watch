@@ -77,7 +77,9 @@ def indexer_checks(scip_cmd: list[str] | None) -> list[Check]:
 def project_checks(root: Path, db_path: Path | None, scip_path: Path) -> list[Check]:
     checks: list[Check] = []
     if not root.is_dir():
-        checks.append(Check(id="watch.root", status="fail", message=f"project root missing: {root}"))
+        checks.append(
+            Check(id="watch.root", status="fail", message=f"project root missing: {root}")
+        )
         return checks
     checks.append(Check(id="watch.root", status="pass", message=f"project root: {root}"))
 

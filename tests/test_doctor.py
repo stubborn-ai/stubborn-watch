@@ -7,9 +7,9 @@ import sqlite3
 from importlib import resources
 from pathlib import Path
 
+from stubborn.store.writer import read_schema_version
 from typer.testing import CliRunner
 
-from stubborn.store.writer import read_schema_version
 from stubborn_watch.cli import app
 from stubborn_watch.doctor.models import DOCTOR_REPORT_SCHEMA, PACKAGE_ID
 from stubborn_watch.doctor.run import run_doctor
@@ -56,15 +56,13 @@ def test_watch_doctor_with_db(tmp_path: Path, monkeypatch) -> None:
     from stubborn.store.writer import IndexWriter
 
     fixture = (
-        Path(__file__).resolve().parents[2]
-        / "stubborn"
-        / "examples"
-        / "fixtures"
-        / "minimal.json"
+        Path(__file__).resolve().parents[2] / "stubborn" / "examples" / "fixtures" / "minimal.json"
     )
     db = tmp_path / "symbols.db"
     IndexWriter(db).write(load_scip_index(fixture))
-    monkeypatch.setattr("stubborn_watch.doctor.checks.shutil.which", lambda name: "/usr/bin/scip-java")
+    monkeypatch.setattr(
+        "stubborn_watch.doctor.checks.shutil.which", lambda name: "/usr/bin/scip-java"
+    )
     report = run_doctor(tmp_path, db_path=db, fix_hint=False)
     assert any(check.id == "watch.db" and check.status == "pass" for check in report.checks)
 
